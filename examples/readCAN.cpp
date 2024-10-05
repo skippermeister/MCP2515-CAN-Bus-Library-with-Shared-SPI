@@ -22,7 +22,7 @@ static const uint8_t pin_irq = 4;
 
 setup()
 {
-  uint8_t;
+  uint8_t rc;
 
   CAN = new MCP2515Class(pin_miso, pin_mosi, pin_clk, pin_cs);
 
