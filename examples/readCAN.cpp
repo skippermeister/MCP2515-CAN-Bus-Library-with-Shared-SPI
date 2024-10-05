@@ -9,7 +9,7 @@
  * The SpiManager library will be included from the module mcp2515_spi
  */
 
-#include <SpiManager.h>
+#include <mcp2515_can.h>
 
 MCP2515Class *CAN;
 
@@ -33,9 +33,9 @@ setup()
 
   pinMode(pin_irq, INPUT_PULLUP);
 
-  CAN->setFilterMask(0, 1, 0xFFFFFFFF);  // Look at all incoming bits and...
-  CAN->setFilter(0, 1, 0x1081407F);  // filter for this message only
-  CAN->setFilterMask(1, 1, myMask);
+  CAN->setFilterMask(MASK0, 1, 0xFFFFFFFF);  // Look at all incoming bits and...
+  CAN->setFilter(RXF0,  1, 0x1081407F);  // filter for this message only
+  CAN->setFilterMask(MASK1, 1, myMask);
 
 	// Change to normal mode to allow messages to be transmitted
 	if ((rc = CAN->setMode(MCP_NORMAL)) != CAN_OK) {
