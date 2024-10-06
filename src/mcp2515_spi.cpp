@@ -47,6 +47,7 @@ void MCP2515SPIClass::spi_init(const int8_t pin_miso, const int8_t pin_mosi, con
     // Return to default state once again after connection check
     irq_reg = static_cast<gpio_num_t>(pin_irq);
     ESP_ERROR_CHECK(gpio_reset_pin(irq_reg));
+    ESP_ERROR_CHECK(gpio_set_direction(irq_reg, GPIO_MODE_INPUT));
 }
 
 bool MCP2515SPIClass::connection_check_interrupt(gpio_num_t pin_irq)
