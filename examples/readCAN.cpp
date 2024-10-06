@@ -24,21 +24,19 @@ setup()
 {
   uint8_t rc;
 
-  CAN = new MCP2515Class(pin_miso, pin_mosi, pin_clk, pin_cs);
+  CAN = new MCP2515Class(pin_miso, pin_mosi, pin_clk, pin_cs, pin_irq);
 
   if ((rc = CAN->initMCP2515(MCP_ANY, CAN_125KBPS, MCP_8MHZ)) != CAN_OK) {
       Serial.printf("MCP2515 failed to initialize. Error code: %d\r\n", rc);
       while(1);
   }
 
-  pinMode(pin_irq, INPUT_PULLUP);
-
   CAN->setFilterMask(MASK0, 1, 0xFFFFFFFF);  // Look at all incoming bits and...
   CAN->setFilter(RXF0,  1, 0x1081407F);  // filter for this message only
   CAN->setFilterMask(MASK1, 1, myMask);
 
-	// Change to normal mode to allow messages to be transmitted
-	if ((rc = CAN->setMode(MCP_NORMAL)) != CAN_OK) {
+  // Change to normal mode to allow messages to be transmitted
+  if ((rc = CAN->setMode(MCP_NORMAL)) != CAN_OK) {
       Serial.printf("MCP2515 failed to set mode to NORMAL. Error code: %d\r\n", rc);
       while(1);
   }
@@ -48,7 +46,7 @@ loop()
 {
   can_message_t rx_message = {};
 
-  if (digitalRead(pin_irq)) return;  // nothing received from CAN Bus
+  if (!CAN->isInterrupt()) return;  // no interrupt means nothing received from CAN Bus
 
   // If CAN_INT pin is low, read receive buffer
   uint8_t rc;
