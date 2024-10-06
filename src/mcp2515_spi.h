@@ -135,7 +135,9 @@ protected:
 private:
     spi_device_handle_t spi;
     gpio_num_t cs_reg;
-    gpio_num_t irq_reg,
+    gpio_num_t irq_reg;
+
+    SemaphoreHandle_t paramLock = NULL;
 };
 
 #endif
