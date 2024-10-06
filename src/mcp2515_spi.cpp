@@ -2,7 +2,6 @@
 
 #include "mcp2515_spi.h"
 
-extern SemaphoreHandle_t paramLock;
 #define SPI_PARAM_LOCK() \
     do {                 \
     } while (xSemaphoreTake(paramLock, portMAX_DELAY) != pdPASS)
