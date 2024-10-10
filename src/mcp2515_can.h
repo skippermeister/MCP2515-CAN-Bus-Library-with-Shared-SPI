@@ -252,15 +252,15 @@ enum CAN_CLKOUT_t {
 
 enum ERROR_t {
 	CAN_OK             = 0,
-    CAN_FAILINIT       = 1,
+	CAN_FAILINIT       = 1,
 	CAN_FAILTX         = 2,
 	CAN_FAILTX_DLC     = (2 | 0x80),
-    CAN_MSGAVAIL       = 3,
+	CAN_MSGAVAIL       = 3,
 	CAN_NOMSG          = 4,
-    CAN_CTRLERROR      = 5,
-    CAN_GETTXBFTIMEOUT = 6,
-    CAN_SENDMSGTIMEOUT = 7,
-    CAN_FAILRX         = 8,
+	CAN_CTRLERROR      = 5,
+	CAN_GETTXBFTIMEOUT = 6,
+	CAN_SENDMSGTIMEOUT = 7,
+	CAN_FAILRX         = 8,
 	CAN_FAILRX_DLC     = (8 | 0x80),
 	CAN_ALLTXBUSY      = 0x80,
 	CAN_FAIL           = 0xFF,
@@ -302,16 +302,15 @@ enum EFLG_t {
 	EFLG_EWARN  = (uint8_t)0b00000001
 };
 static const uint8_t EFLG_ERRORMASK = EFLG_RX1OVR
-									| EFLG_RX0OVR
-									| EFLG_TXBO
-									| EFLG_TXEP
-									| EFLG_RXEP;
-
+				| EFLG_RX0OVR
+				| EFLG_TXBO
+				| EFLG_TXEP
+				| EFLG_RXEP;
 
 enum CANCTRL_REQOP_MODE_t {
 	MCP_NORMAL     = (uint8_t)0x00,
-    MODE_ONESHOT   = (uint8_t)0x08,
-    ABORT_TX       = (uint8_t)0x10,
+	MODE_ONESHOT   = (uint8_t)0x08,
+	ABORT_TX       = (uint8_t)0x10,
 	MCP_SLEEP      = (uint8_t)0x20,
 	MCP_LOOPBACK   = (uint8_t)0x40,
 	MCP_LISTENONLY = (uint8_t)0x60,
@@ -387,19 +386,19 @@ private:
     void prepareId(uint8_t *buffer, const bool ext, const uint32_t id);
 
     struct TXBn_REGS_t {
-	    REGISTER_t CTRL;
-    	REGISTER_t SIDH;
-	    REGISTER_t DATA;
+	REGISTER_t CTRL;
+	REGISTER_t SIDH;
+	REGISTER_t DATA;
     };
     struct RXBn_REGS_t {
-	    REGISTER_t CTRL;
+	REGISTER_t CTRL;
     	REGISTER_t SIDH;
-	    REGISTER_t DATA;
-	    CANINTF_t  CANINTF_RXnIF;
+	REGISTER_t DATA;
+	CANINTF_t  CANINTF_RXnIF;
     };
 
-	TXBn_REGS_t* TXB_ptr = NULL;
-	RXBn_REGS_t* RXB_ptr = NULL;
+    TXBn_REGS_t* TXB_ptr = NULL;
+    RXBn_REGS_t* RXB_ptr = NULL;
 };
 
 #endif
