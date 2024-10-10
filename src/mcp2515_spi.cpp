@@ -37,7 +37,7 @@ void MCP2515SPIClass::spi_init(const int8_t pin_miso, const int8_t pin_mosi, con
         .post_cb = nullptr,
     };
 
-    spi = SpiManagerInst.alloc_device("SPI", bus_config, device_config);
+    spi = SpiManagerInst.alloc_device("", bus_config, device_config);
     if (!spi)
         ESP_ERROR_CHECK(ESP_FAIL);
 
