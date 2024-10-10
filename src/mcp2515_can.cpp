@@ -7,14 +7,10 @@
 #include "esp_log.h"
 #include "mcp2515_can.h"
 
-MCP2515Class::MCP2515Class(const uint8_t pin_miso, const uint8_t pin_mosi, const uint8_t pin_clk, const uint8_t pin_cs, const uint8_t pin_irq, const uint32_t spi_speed)
+MCP2515Class::MCP2515Class(const spi_device_handle_t spi, const uint8_t pin_irq)
 {
-    _pin_miso = pin_miso;
-    _pin_mosi = pin_mosi;
-    _pin_clk = pin_clk;
-    _pin_cs = pin_cs;
-    _pin_irq = pin_irq;
-    _spi_speed = spi_speed;
+    _pin_irq = static_cast<gpio_num_t>(pin_irq);
+    _spi = spi;
 }
 
 MCP2515Class::~MCP2515Class()
@@ -31,35 +27,35 @@ uint8_t MCP2515Class::initMCP2515(const int8_t canIDMode, const CAN_SPEED_t canS
 {
     spi_init(_pin_miso, _pin_mosi, _pin_clk, _pin_cs, _pin_irq, _spi_speed);
 
-	TXB_ptr = (TXBn_REGS_t*)malloc(sizeof(TXBn_REGS_t[N_TXBUFFERS]));
-	RXB_ptr = (RXBn_REGS_t*)malloc(sizeof(RXBn_REGS_t[N_RXBUFFERS]));
-	if(TXB_ptr == NULL || RXB_ptr == NULL){
-		ESP_LOGE(TAG_MCP2515, "Couldn't initialize (TXB_ptr || RXB_ptr). (NULL pointer)");
-		return CAN_FAILINIT;
-	}
+    TXB_ptr = (TXBn_REGS_t*)malloc(sizeof(TXBn_REGS_t[N_TXBUFFERS]));
+    RXB_ptr = (RXBn_REGS_t*)malloc(sizeof(RXBn_REGS_t[N_RXBUFFERS]));
+    if(TXB_ptr == NULL || RXB_ptr == NULL){
+        ESP_LOGE(TAG_MCP2515, "Couldn't initialize (TXB_ptr || RXB_ptr). (NULL pointer)");
+        return CAN_FAILINIT;
+    }
 
-	// TXBn and RXBn REGISTER INITIALIZATION
-	TXB_ptr[0].CTRL = MCP_TXB0CTRL;
-	TXB_ptr[0].DATA = MCP_TXB0DATA;
-	TXB_ptr[0].SIDH = MCP_TXB0SIDH;
+    // TXBn and RXBn REGISTER INITIALIZATION
+    TXB_ptr[0].CTRL = MCP_TXB0CTRL;
+    TXB_ptr[0].DATA = MCP_TXB0DATA;
+    TXB_ptr[0].SIDH = MCP_TXB0SIDH;
 
-	TXB_ptr[1].CTRL = MCP_TXB1CTRL;
-	TXB_ptr[1].DATA = MCP_TXB1DATA;
-	TXB_ptr[1].SIDH = MCP_TXB1SIDH;
+    TXB_ptr[1].CTRL = MCP_TXB1CTRL;
+    TXB_ptr[1].DATA = MCP_TXB1DATA;
+    TXB_ptr[1].SIDH = MCP_TXB1SIDH;
 
-	TXB_ptr[2].CTRL = MCP_TXB2CTRL;
-	TXB_ptr[2].DATA = MCP_TXB2DATA;
-	TXB_ptr[2].SIDH = MCP_TXB2SIDH;
+    TXB_ptr[2].CTRL = MCP_TXB2CTRL;
+    TXB_ptr[2].DATA = MCP_TXB2DATA;
+    TXB_ptr[2].SIDH = MCP_TXB2SIDH;
 
-	RXB_ptr[0].CTRL = MCP_RXB0CTRL;
-	RXB_ptr[0].DATA = MCP_RXB0DATA;
-	RXB_ptr[0].SIDH = MCP_RXB0SIDH;
-	RXB_ptr[0].CANINTF_RXnIF = CANINTF_RX0IF;
+    RXB_ptr[0].CTRL = MCP_RXB0CTRL;
+    RXB_ptr[0].DATA = MCP_RXB0DATA;
+    RXB_ptr[0].SIDH = MCP_RXB0SIDH;
+    RXB_ptr[0].CANINTF_RXnIF = CANINTF_RX0IF;
 
-	RXB_ptr[1].CTRL = MCP_RXB1CTRL;
-	RXB_ptr[1].DATA = MCP_RXB1DATA;
-	RXB_ptr[1].SIDH = MCP_RXB1SIDH;
-	RXB_ptr[1].CANINTF_RXnIF = CANINTF_RX1IF;
+    RXB_ptr[1].CTRL = MCP_RXB1CTRL;
+    RXB_ptr[1].DATA = MCP_RXB1DATA;
+    RXB_ptr[1].SIDH = MCP_RXB1SIDH;
+    RXB_ptr[1].CANINTF_RXnIF = CANINTF_RX1IF;
 
     return reset(canIDMode, canSpeed, canClock);
 }
