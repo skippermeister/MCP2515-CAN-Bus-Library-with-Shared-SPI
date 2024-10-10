@@ -24,9 +24,39 @@ setup()
 {
   uint8_t rc;
 
-  CAN = new MCP2515Class(pin_miso, pin_mosi, pin_clk, pin_cs, pin_irq);
+  auto bus_config = std::make_shared<SpiBusConfig>(
+      static_cast<gpio_num_t>(pin_mosi),
+      static_cast<gpio_num_t>(pin_miso),
+      static_cast<gpio_num_t>(pin_clk)
+  );
 
-  if ((rc = CAN->initMCP2515(MCP_ANY, CAN_125KBPS, MCP_8MHZ)) != CAN_OK) {
+  spi_device_interface_config_t device_config {
+      .command_bits = 0, // set by transactions individually
+      .address_bits = 0, // set by transactions individually
+      .dummy_bits = 0,
+      .mode = 0, // SPI mode 0
+      .duty_cycle_pos = 0,
+      .cs_ena_pretrans = 2, // only 1 pre and post cycle would be required for register access
+      .cs_ena_posttrans = static_cast<uint8_t>(2 * spi_speed / 1000000), // >2 us
+      .clock_speed_hz = spi_speed, // 10000000, // 10mhz
+      .input_delay_ns = 0,
+      .spics_io_num = pin_cs,
+      .flags = 0,
+      .queue_size = 1,
+      .pre_cb = nullptr,
+      .post_cb = nullptr,
+  };
+
+  spi_device_handle_t spi;
+  spi = SpiManagerInst.alloc_device("", bus_config, device_config);
+  if (!spi) {
+    Serial.println("failed to alloc a shared SPI bus");
+    while (1);
+  }
+
+  CAN = new MCP2515Class(spi, pin_irq);
+
+  if ((rc = CAN->begin(MCP_ANY, CAN_125KBPS, MCP_8MHZ)) != CAN_OK) {
       Serial.printf("MCP2515 failed to initialize. Error code: %d\r\n", rc);
       while(1);
   }
