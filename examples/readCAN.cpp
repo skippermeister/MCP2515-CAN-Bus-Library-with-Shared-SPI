@@ -9,6 +9,7 @@
  * The SpiManager library will be included from the module mcp2515_spi
  */
 
+#include <SpiManager.h>
 #include <mcp2515_can.h>
 
 MCP2515Class *CAN;
