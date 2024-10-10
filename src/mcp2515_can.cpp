@@ -23,9 +23,9 @@ MCP2515Class::~MCP2515Class()
     if (RXB_ptr) free(RXB_ptr);
 }
 
-uint8_t MCP2515Class::initMCP2515(const int8_t canIDMode, const CAN_SPEED_t canSpeed, const MCP2515_CLOCK_t canClock)
+uint8_t MCP2515Class::begin(const int8_t canIDMode, const CAN_SPEED_t canSpeed, const MCP2515_CLOCK_t canClock)
 {
-    spi_init(_pin_miso, _pin_mosi, _pin_clk, _pin_cs, _pin_irq, _spi_speed);
+    spi_init();
 
     TXB_ptr = (TXBn_REGS_t*)malloc(sizeof(TXBn_REGS_t[N_TXBUFFERS]));
     RXB_ptr = (RXBn_REGS_t*)malloc(sizeof(RXBn_REGS_t[N_RXBUFFERS]));
