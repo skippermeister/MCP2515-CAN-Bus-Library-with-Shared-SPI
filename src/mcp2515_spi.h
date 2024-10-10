@@ -6,7 +6,8 @@
 #include <Arduino.h>
 #include <stdint.h>
 #include <driver/spi_master.h>
-#include <SpiManager.h>
+
+static const uint32_t MCP2515_SPI_SPEED = 10000000; // 10MHz
 
 enum REGISTER_t {
 	MCP_RXF0SIDH = (uint8_t)0x00,
@@ -21,8 +22,8 @@ enum REGISTER_t {
 	MCP_RXF2SIDL = (uint8_t)0x09,
 	MCP_RXF2EID8 = (uint8_t)0x0A,
 	MCP_RXF2EID0 = (uint8_t)0x0B,
-    MCP_BFPCTRL  = (uint8_t)0x0C,
-    MCP_TXRTSCTRL= (uint8_t)0x0D,
+	MCP_BFPCTRL  = (uint8_t)0x0C,
+	MCP_TXRTSCTRL= (uint8_t)0x0D,
 	MCP_CANSTAT  = (uint8_t)0x0E,
 	MCP_CANCTRL  = (uint8_t)0x0F,
 	MCP_RXF3SIDH = (uint8_t)0x10,
@@ -120,7 +121,7 @@ enum INSTRUCTION_t {
 class MCP2515SPIClass
 {
 public:
-    void spi_init(const int8_t pin_miso, const int8_t pin_mosi, const int8_t pin_clk, const int8_t pin_cs, const int8_t pin_irq, const int32_t spi_speed);
+    void spi_init(void);
     void spi_deinit(void);
     void spi_reset(void);
 
@@ -132,10 +133,11 @@ protected:
     void spi_modifyRegister(const REGISTER_t reg, const uint8_t mask, const uint8_t data);
     uint8_t spi_getStatus(void);
 
+    spi_device_handle_t _spi;
+    gpio_num_t _pin_irq;
+
 private:
-    spi_device_handle_t spi;
-    gpio_num_t cs_reg;
-    gpio_num_t irq_reg;
+    static bool connection_check_interrupt(gpio_num_t pin_irq);
 
     SemaphoreHandle_t paramLock = NULL;
 };
