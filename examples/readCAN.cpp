@@ -42,7 +42,7 @@ setup()
       .clock_speed_hz = spi_speed, // 10000000, // 10mhz
       .input_delay_ns = 0,
       .spics_io_num = pin_cs,
-      .flags = 0,
+      .flags = SPI_DEVICE_HALFDUPLEX,
       .queue_size = 1,
       .pre_cb = nullptr,
       .post_cb = nullptr,
