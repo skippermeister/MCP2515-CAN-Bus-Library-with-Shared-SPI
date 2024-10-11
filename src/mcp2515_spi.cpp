@@ -39,145 +39,168 @@ void MCP2515SPIClass::spi_deinit(void)
 
 void MCP2515SPIClass::spi_reset(void)
 {
-    spi_transaction_t trans = {
-        .flags = SPI_TRANS_USE_RXDATA | SPI_TRANS_USE_TXDATA,
-        .cmd = 0,
-        .addr = 0,
-        .length = 8, // 1 bits = 1 bytes
-        .rxlength = 0,
-        .user = 0,
-        .tx_data = {INSTRUCTION_RESET,0,0,0},
-        .rx_data = {0,0,0,0}
+    spi_transaction_ext_t trans = {
+        .base {
+            .flags = SPI_TRANS_VARIABLE_CMD, // SPI_TRANS_USE_RXDATA | SPI_TRANS_USE_TXDATA,
+            .cmd = INSTRUCTION_RESET,
+            .addr = 0,
+            .length = 0,
+            .rxlength = 0,
+            .user = 0,
+            .tx_buffer = nullptr,
+            .rx_buffer = nullptr
+        },
+        .command_bits = 8,
+        .address_bits = 0,
+        .dummy_bits = 0,
     };
 
     SPI_PARAM_LOCK();
-    ESP_ERROR_CHECK(spi_device_polling_transmit(_spi, &trans));
+    ESP_ERROR_CHECK(spi_device_polling_transmit(_spi, reinterpret_cast<spi_transaction_t*>(&trans)));
     SPI_PARAM_UNLOCK();
 }
 
 uint8_t MCP2515SPIClass::spi_readRegister(const REGISTER_t reg)
 {
-    spi_transaction_t trans = {
-        .flags = SPI_TRANS_USE_RXDATA | SPI_TRANS_USE_TXDATA,
-        .cmd = 0,
-        .addr = 0,
-        .length = (3 * 8), // 24 bits = 3 bytes
-        .rxlength = 0, // default to length 24 bits = 3 bytes
-        .user = 0,
-        .tx_data = {INSTRUCTION_READ, reg, 0x00},
-        .rx_data = {0,0,0,0}
+    uint8_t data;
+    spi_transaction_ext_t trans = {
+        .base {
+            .flags = SPI_TRANS_VARIABLE_CMD | SPI_TRANS_VARIABLE_ADDR,
+            .cmd = INSTRUCTION_READ,
+            .addr = reg,
+            .length = 0,
+            .rxlength = 8,
+            .user = 0,
+            .tx_buffer = nullptr,
+            .rx_buffer = &data
+        },
+        .command_bits = 8,
+        .address_bits = 8,
+        .dummy_bits = 0,
     };
 
     SPI_PARAM_LOCK();
-    ESP_ERROR_CHECK(spi_device_polling_transmit(_spi, &trans));
+    ESP_ERROR_CHECK(spi_device_polling_transmit(_spi, reinterpret_cast<spi_transaction_t*>(&trans)));
     SPI_PARAM_UNLOCK();
 
-    return trans.rx_data[2];
+    return data;
 }
 
 void MCP2515SPIClass::spi_readRegisters(const REGISTER_t reg, uint8_t values[], const uint8_t n)
 {
-    uint8_t tx_data[n + 2] = { INSTRUCTION_READ, reg };
-    uint8_t rx_data[n + 2];
-
-    spi_transaction_t trans = {
-        .flags = 0,  // use tx_buffer and rx_buffer
-        .cmd = 0,
-        .addr = 0,
-        .length = ((2 + ((size_t)n)) * 8),
-        .rxlength = 0,
-        .user = 0,
-        .tx_buffer = tx_data,
-        .rx_buffer = rx_data
+    spi_transaction_ext_t trans = {
+        .base {
+            .flags = SPI_TRANS_VARIABLE_CMD | SPI_TRANS_VARIABLE_ADDR,  // use tx_buffer and rx_buffer
+            .cmd = INSTRUCTION_READ,
+            .addr = reg,
+            .length = 0,
+            .rxlength = ((size_t)n) * 8,
+            .user = 0,
+            .tx_buffer = nullptr,
+            .rx_buffer = values
+        },
+        .command_bits = 8,
+        .address_bits = 8,
+        .dummy_bits = 0,
     };
 
     SPI_PARAM_LOCK();
-    ESP_ERROR_CHECK(spi_device_polling_transmit(_spi, &trans));
+    ESP_ERROR_CHECK(spi_device_polling_transmit(_spi, reinterpret_cast<spi_transaction_t*>(&trans)));
     SPI_PARAM_UNLOCK();
-    for (uint8_t i = 0; i < n; i++) {
-        values[i] = rx_data[i+2];
-    }
 }
 
 void MCP2515SPIClass::spi_setRegister(const REGISTER_t reg, const uint8_t value)
 {
-    spi_transaction_t trans = {
-        .flags = SPI_TRANS_USE_RXDATA | SPI_TRANS_USE_TXDATA,
-        .cmd = 0,
-        .addr = 0,
-        .length = (3 * 8),
-        .rxlength = 0,
-        .user = 0,
-        .tx_data = { INSTRUCTION_WRITE, reg, value },
-        .rx_data = {0,0,0,0}
+    spi_transaction_ext_t trans = {
+        .base {
+            .flags = SPI_TRANS_VARIABLE_CMD | SPI_TRANS_VARIABLE_ADDR, // SPI_TRANS_USE_RXDATA | SPI_TRANS_USE_TXDATA,
+            .cmd = INSTRUCTION_WRITE,
+            .addr = reg,
+            .length = 8,
+            .rxlength = 0,
+            .user = 0,
+            .tx_buffer = &value,
+            .rx_buffer = nullptr
+        },
+        .command_bits = 8,
+        .address_bits = 8,
+        .dummy_bits = 0,
     };
 
     SPI_PARAM_LOCK();
-    ESP_ERROR_CHECK(spi_device_polling_transmit(_spi, &trans));
+    ESP_ERROR_CHECK(spi_device_polling_transmit(_spi, reinterpret_cast<spi_transaction_t*>(&trans)));
     SPI_PARAM_UNLOCK();
 }
 
 void MCP2515SPIClass::spi_setRegisters(const REGISTER_t reg, const uint8_t values[], const uint8_t n)
 {
-    uint8_t data[n + 2];
-
-    data[0] = INSTRUCTION_WRITE;
-    data[1] = reg;
-
-    for (uint8_t i=0; i<n; i++) {
-        data[i+2] = values[i];
-    }
-
-    spi_transaction_t trans = {
-        .flags = 0, // use tx_buffer and rx_buffer (point to nullptr)
-        .cmd = 0,
-        .addr = 0,
-        .length = ((2 + ((size_t)n)) * 8),
-        .rxlength = 0,
-        .user = 0,
-        .tx_buffer = data,
-        .rx_buffer = nullptr
+    spi_transaction_ext_t trans = {
+        .base {
+            .flags = SPI_TRANS_VARIABLE_CMD | SPI_TRANS_VARIABLE_ADDR, // use tx_buffer and rx_buffer (point to nullptr)
+            .cmd = INSTRUCTION_WRITE,
+            .addr = reg,
+            .length = ((size_t)n) * 8,
+            .rxlength = 0,
+            .user = 0,
+            .tx_buffer = values,
+            .rx_buffer = nullptr
+        },
+        .command_bits = 8,
+        .address_bits = 8,
+        .dummy_bits = 0,
     };
 
     SPI_PARAM_LOCK();
-    ESP_ERROR_CHECK(spi_device_polling_transmit(_spi, &trans));
+    ESP_ERROR_CHECK(spi_device_polling_transmit(_spi, reinterpret_cast<spi_transaction_t*>(&trans)));
     SPI_PARAM_UNLOCK();
 }
 
 void MCP2515SPIClass::spi_modifyRegister(const REGISTER_t reg, const uint8_t mask, const uint8_t data)
 {
-    spi_transaction_t trans = {
-        .flags = SPI_TRANS_USE_RXDATA | SPI_TRANS_USE_TXDATA,
-        .cmd = 0,
-        .addr = 0,
-        .length = (4 * 8),
-        .rxlength = 0,
-        .user = 0,
-        .tx_data = { INSTRUCTION_BITMOD, reg, mask, data },
-        .rx_data = {0,0,0,0}
+    spi_transaction_ext_t trans = {
+        .base {
+            .flags = SPI_TRANS_VARIABLE_CMD | SPI_TRANS_VARIABLE_ADDR | SPI_TRANS_USE_TXDATA,
+            .cmd = INSTRUCTION_BITMOD,
+            .addr = reg,
+            .length = 2 * 8,
+            .rxlength = 0,
+            .user = 0,
+            .tx_data = { mask, data },
+            .rx_buffer = nullptr
+        },
+        .command_bits = 8,
+        .address_bits = 8,
+        .dummy_bits = 0,
     };
 
     SPI_PARAM_LOCK();
-    ESP_ERROR_CHECK(spi_device_polling_transmit(_spi, &trans));
+    ESP_ERROR_CHECK(spi_device_polling_transmit(_spi, reinterpret_cast<spi_transaction_t*>(&trans)));
     SPI_PARAM_UNLOCK();
 }
 
 uint8_t MCP2515SPIClass::spi_getStatus(void)
 {
-    spi_transaction_t trans = {
-        .flags = SPI_TRANS_USE_RXDATA | SPI_TRANS_USE_TXDATA,
-        .cmd = 0,
-        .addr = 0,
-        .length = (2 * 8),
-        .rxlength = 0,
-        .user = 0,
-        .tx_data = { INSTRUCTION_READ_STATUS, 0x00 },
-        .rx_data = {0,0,0,0}
+    uint8_t data;
+
+    spi_transaction_ext_t trans = {
+        .base {
+            .flags = SPI_TRANS_VARIABLE_CMD, // SPI_TRANS_USE_RXDATA | SPI_TRANS_USE_TXDATA,
+            .cmd = INSTRUCTION_READ_STATUS,
+            .addr = 0,
+            .length = 0,
+            .rxlength = 8,
+            .user = 0,
+            .tx_buffer = nullptr,
+            .rx_buffer = &data
+        },
+        .command_bits = 8,
+        .address_bits = 0,
+        .dummy_bits = 0,
     };
 
     SPI_PARAM_LOCK();
-    ESP_ERROR_CHECK(spi_device_polling_transmit(_spi, &trans));
+    ESP_ERROR_CHECK(spi_device_polling_transmit(_spi, reinterpret_cast<spi_transaction_t*>(&trans)));
     SPI_PARAM_UNLOCK();
 
-    return trans.rx_data[1];
+    return data;
 }
